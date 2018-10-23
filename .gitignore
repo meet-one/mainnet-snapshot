@@ -59,3 +59,9 @@ typings/
 
 # next.js build output
 .next
+
+# project ignore - by UMU618
+.csv
+.sh
+.txt
+.zip
