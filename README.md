@@ -1,10 +1,17 @@
 # MEET.ONE Sidechain Preparation Tools
 
 ## 1. Install required nodejs modules
+
 ```
-npm install commander
-npm install eosjs
-npm install moment
+yarn install
+```
+
+Or
+
+```
+yarn add commander
+yarn add eosjs
+yarn add moment
 ```
 
 ## 2. [Optional] Add getTableByScope to [eosjs-api](https://github.com/EOSIO/eosjs-api)
@@ -20,21 +27,31 @@ wget https://raw.githubusercontent.com/meet-one/eosjs-api/master/src/api/v1/chai
 ## 3. Run snapshot-scripts one by one
 
 ### Export all accounts of mainnet
+
 ```
 node 1-export-accounts.js -m
 ```
 
 ### Get accounts info
+
 ```
-node 2_get_accounts_info.js -m mainnet-1-all-accounts.txt
+node 2-get-accounts-info.js -m mainnet-1-all-accounts.txt
 ```
 
 ### Convert accounts info to 'create accounts' shell script
+
 ```
-node 3_create_accounts.js mainnet-2-info.txt
+node 3-create-accounts.js mainnet-2-info.txt
 ```
 
 ### Calculate total staked EOS for NET and CPU
+
 ```
 node 3-calc-total-staked-eos.js mainnet-2-info.txt
+```
+
+### Export MEET.ONE accounts of mainnet
+
+```
+node 4-export-meetone-accounts.js -m
 ```

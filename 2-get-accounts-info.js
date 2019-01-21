@@ -37,6 +37,7 @@ let outputPath = ''
       + CONST.LOCAL.URL)
     .option('-k, --kylin', 'Equal to --url ' + CONST.KYLIN.URL)
     .option('-m, --mainnet', 'Equal to --url ' + CONST.MAINNET.URL)
+    .option('-s, --sidechain', 'Equal to --url ' + CONST.SIDECHAIN.URL)
     .option('-o, --output <FILE>', 'Write to FILE, will be appended!')
     .option('-p, --output-prefix <NAME>', 'Output filename prefix')
     .on('--help', function () {
@@ -67,6 +68,8 @@ let outputPath = ''
     url = CONST.KYLIN.URL
   } else if (po.mainnet) {
     url = CONST.MAINNET.URL
+  } else if (po.sidechain) {
+    url = CONST.SIDECHAIN.URL
   } else {
     url = CONST.LOCAL.URL
   }

@@ -33,6 +33,7 @@ let creator = ''
       + CONST.LOCAL.URL)
     .option('-k, --kylin', 'Equal to --url ' + CONST.KYLIN.URL)
     .option('-m, --mainnet', 'Equal to --url ' + CONST.MAINNET.URL)
+    .option('-s, --sidechain', 'Equal to --url ' + CONST.SIDECHAIN.URL)
     .option('-c, --creator <TEXT>', 'Set creator')
     .option('-o, --output <FILE>', 'Write to FILE, will be appended!')
     .option('-p, --output-prefix <NAME>', 'Output filename prefix')
@@ -63,6 +64,8 @@ let creator = ''
     url = CONST.KYLIN.URL
   } else if (po.mainnet) {
     url = CONST.MAINNET.URL
+  } else if (po.sidechain) {
+    url = CONST.SIDECHAIN.URL
   } else {
     url = CONST.LOCAL.URL
   }

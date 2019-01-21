@@ -1,20 +1,7 @@
-#!/usr/bin/env node
-
-/**
- * @author UMU618 <umu618@hotmail.com>
- * @copyright MEET.ONE 2018
- * @description Use npm-coding-style.
- */
-
-'use strict'
-
-const CODE = 'eosio'
-const TABLE = 'userres'
-const LIMIT = 10000
-const DEFAULT_OUTPUT_FILE_NAME_PREFIX = '1-accounts@'
-
-let url = ''
-let outputPath = ''
+const CODE = 'eosiomeetone';
+const TABLE = 'accounts';
+const LIMIT = 10000;
+const DEFAULT_OUTPUT_FILE_NAME_PREFIX = '4-meetone-accounts@';
 
 // parse arguments
 {
@@ -83,61 +70,58 @@ let outputPath = ''
   console.log('Output file: ' + outputPath)
 }
 
-const EosApi = require('eosjs-api')
-const options = {
-  httpEndpoint: url
-  , verbose: false
-  , logger: {
-    log: null //console.log
-    , error: console.error
-  }
-  , fetchConfiguration: {}
-}
-const eos = EosApi(options)
+const EosApi = require('eosjs-api');
+options = {
+  httpEndpoint: url,
+  verbose: false,
+  logger: {
+    log: null,//console.log,
+    error: console.error
+  },
+  fetchConfiguration: {}
+};
+eos = EosApi(options);
 
-const fs = require('fs')
-const ws = fs.createWriteStream(outputPath, { encoding: 'utf8', autoClose: true })
+const fs = require('fs');
+const ws = fs.createWriteStream(outputPath, {
+  encoding: 'utf8',
+  autoClose: true
+});
 
-let lastOne = ''
-let retry = 0
+let last_one = '';
+let retry = 0;
 
-function succeeded(res) {
-  retry = 0
+cb = (res) => {
+  retry = 0;
   if (res.rows) {
-    let buffer = ''
+    var buffer = '';
     res.rows.forEach(e => {
-      buffer += e.scope + '\n'
-    })
-    ws.write(buffer)
+      buffer += e.scope + '\n';
+    });
+    ws.write(buffer);
   }
   if (res.more) {
-    if (res.more > lastOne) {
-      lastOne = res.more
-      console.log('Next: ' + lastOne)
-      eos
-        .getTableByScope(CODE, TABLE, ' ' + lastOne, -1, LIMIT)
-        .then(succeeded, failed)
+    if (res.more > last_one) {
+      last_one = res.more;
+      console.log('Next: ' + last_one);
+      eos.getTableByScope(CODE, TABLE, ' ' + last_one, -1, LIMIT).then(cb, err_cb)
     } else {
-      ws.end()
-      console.log('Duplicated, exit!')
+      ws.end();
+      console.log('Duplicated, exit!');
     }
   } else {
-    ws.end()
-    console.log('Done!')
+    ws.end();
+    console.log('Done!');
   }
-}
+};
 
-function failed(err) {
+err_cb = (err) => {
   if (retry++ < 3) {
-    console.log('Retry on ' + lastOne + ' for ' + retry + ' time(s)')
-    eos
-      .getTableByScope(CODE, TABLE, ' ' + lastOne, -1, LIMIT)
-      .then(succeeded, failed)
+    console.log('Retry on ' + last_one + ', ' + retry + ' time(s)');
+    eos.getTableByScope(CODE, TABLE, ' ' + last_one, -1, LIMIT).then(cb, err_cb);
   } else {
-    console.log('Retry failed on ' + lastOne)
+    console.log('Retry failed on ' + last_one);
   }
-}
+};
 
-eos
-  .getTableByScope(CODE, TABLE, 0, -1, LIMIT)
-  .then(succeeded, failed)
+eos.getTableByScope(CODE, TABLE, 0, -1, LIMIT).then(cb, err_cb);
