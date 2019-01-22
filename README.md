@@ -50,6 +50,12 @@ node 3-create-accounts.js mainnet-2-info.txt
 node 3-calc-total-staked-eos.js mainnet-2-info.txt
 ```
 
+### Convert accounts info to 'create sidechain accounts' shell script
+
+```
+node 3-create-sidechain-accounts.js mainnet-2-info.txt
+```
+
 ### Export MEET.ONE accounts of mainnet
 
 ```
