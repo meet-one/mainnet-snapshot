@@ -242,8 +242,8 @@ rl.on('line', (line) => {
       active_key = owner_key
     }
 
-    ws.write('echo ' + jo.account_name + ' -> ' + sidechain_account
-      + '\ncleos -u $server_url system newaccount'
+    ws.write('echo "' + jo.account_name + ' -> ' + sidechain_account
+      + '"\ncleos -u $server_url system newaccount'
       + ' --stake-net "$stake_net"'
       + ' --stake-cpu "$stake_cpu"'
       + ' --buy-ram-kbytes $buy_ram_kbytes'
