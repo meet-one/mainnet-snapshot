@@ -9,8 +9,8 @@
 'use strict'
 
 const DEFAULT_OUTPUT_FILE_NAME = '3-create-sidechain-accounts.sh'
-const STAKE_NET = '50.0000 MEETONE'
-const STAKE_CPU = '50.0000 MEETONE'
+const STAKE_NET = '1.0000 MEETONE'
+const STAKE_CPU = '9.0000 MEETONE'
 const BUY_RAM_KBYTES = '4'
 
 let inputPath = ''
@@ -83,7 +83,7 @@ let creator = ''
       process.exit(-1)
     }
   } else {
-    creator = 'eosio'
+    creator = 'm'
   }
   console.log('Creator: ' + creator)
 
