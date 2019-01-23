@@ -83,7 +83,7 @@ let creator = ''
       process.exit(-1)
     }
   } else {
-    creator = 'm'
+    creator = 'eosio.m'
   }
   console.log('Creator: ' + creator)
 
