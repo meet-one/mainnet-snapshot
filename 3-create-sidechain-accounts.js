@@ -242,13 +242,12 @@ rl.on('line', (line) => {
       active_key = owner_key
     }
 
-    ws.write('echo "' + jo.account_name + ' -> ' + sidechain_account
-      + '"\ncleos -u $server_url system newaccount'
+    ws.write('echo ' + jo.account_name + ' # ' + sidechain_account
+      + '\ncleos -u $server_url system newaccount $creator '
+      + sidechain_account + ' ' + owner_key + ' ' + active_key
       + ' --stake-net "$stake_net"'
       + ' --stake-cpu "$stake_cpu"'
-      + ' --buy-ram-kbytes $buy_ram_kbytes'
-      + ' $creator ' + sidechain_account + ' ' + owner_key + ' ' + active_key
-      + '\n')
+      + ' --buy-ram-kbytes $buy_ram_kbytes\n')
   } else {
     throw new Error(line)
   }
