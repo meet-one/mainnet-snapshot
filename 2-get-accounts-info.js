@@ -132,7 +132,7 @@ async function GetAccountKeys() {
     // line index = line number - 1
     let accountName = lines[lineNumber - 1]
     if (retry == 0) {
-      console.log('[' + lineNumber + '] Fetching info of ' + accountName)
+      console.log('[' + lineNumber + '] ' + accountName)
     } else {
       console.log('[' + lineNumber + '] Retry on ' + accountName + ' for '
         + retry + ' times...')
