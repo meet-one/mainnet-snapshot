@@ -378,10 +378,13 @@ function newAccount(eos, creator, accountName, ownerPublicKey, activePublicKey) 
       + ', block_num: ' + res.processed.block_num
       + ', block_time: ' + res.processed.block_time)
 
-    ++userIndex
-    let user = keyUsers[userIndex]
-    newAccount(eos, creator, user.account
-      , user.ownerPublicKey, user.activePublicKey)
+    if (++userIndex < keyUsers.length) {
+      let user = keyUsers[userIndex]
+      newAccount(eos, creator, user.account
+        , user.ownerPublicKey, user.activePublicKey)
+    } else {
+      console.log('Finish creating accounts!')
+    }
   }
 
   function failedTrx(err) {
