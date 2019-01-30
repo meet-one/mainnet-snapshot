@@ -388,8 +388,8 @@ function newAccount(eos, creator, accountName, ownerPublicKey, activePublicKey) 
   }
 
   function failedTrx(err) {
-    if (err.message) {
-      let e = JSON.parse(err.message)
+    if (err) {
+      let e = JSON.parse(err)
       // account_name_exists_exception
       if (e && e.code == 500 && e.error.code == 3050001) {
         retry = 0
@@ -404,7 +404,7 @@ function newAccount(eos, creator, accountName, ownerPublicKey, activePublicKey) 
         }
         return
       } else {
-        console.error(err.message)
+        console.error(err)
       }
     }
 
