@@ -1,7 +1,11 @@
 {
+  "private_keys": [
+    "5K",
+    "5J"
+  ],
   "dependencies": {
     "commander": "^2.19.0",
-    "eosjs-api": "^7.0.4",
+    "eosjs": "^16.0.9",
     "moment": "^2.23.0"
   }
 }
