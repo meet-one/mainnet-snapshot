@@ -389,21 +389,25 @@ function newAccount(eos, creator, accountName, ownerPublicKey, activePublicKey) 
 
   function failedTrx(err) {
     if (err) {
-      let e = JSON.parse(err)
-      // account_name_exists_exception
-      if (e && e.code == 500 && e.error.code == 3050001) {
-        retry = 0
-        console.log('= ' + accountName)
+      try {
+        let e = JSON.parse(err)
+        // account_name_exists_exception
+        if (e && e.code == 500 && e.error.code == 3050001) {
+          retry = 0
+          console.log('= ' + accountName)
 
-        if (++userIndex < keyUsers.length) {
-          let user = keyUsers[userIndex]
-          newAccount(eos, creator, user.account
-            , user.ownerPublicKey, user.activePublicKey)
+          if (++userIndex < keyUsers.length) {
+            let user = keyUsers[userIndex]
+            newAccount(eos, creator, user.account
+              , user.ownerPublicKey, user.activePublicKey)
+          } else {
+            console.log('Finish creating accounts!')
+          }
+          return
         } else {
-          console.log('Finish creating accounts!')
+          console.error(err)
         }
-        return
-      } else {
+      } catch(ex) {
         console.error(err)
       }
     }
