@@ -89,7 +89,7 @@ let onlyPubkey = false
       process.exit(-1)
     }
   } else {
-    creator = 'eosio.m'
+    creator = 'eosio'
   }
   console.log('Creator: ' + creator)
 
@@ -112,7 +112,7 @@ let onlyPubkey = false
   }
   console.log('Output file: ' + outputPath)
 
-  onlyPubkey = po.onlyPubkey
+  onlyPubkey = !!po.onlyPubkey
   console.log('Only Publickeys accounts: ' + onlyPubkey)
 }
 
