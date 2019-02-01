@@ -40,7 +40,6 @@ let onlyPubkey = false
     .option('-m, --mainnet', 'Equal to --url ' + CONST.MAINNET.URL)
     .option('-s, --sidechain', 'Equal to --url ' + CONST.SIDECHAIN.URL)
     .option('-c, --creator <TEXT>', 'Set creator')
-    .option('-p, --output-prefix <NAME>', 'Output filename prefix')
     .option('--only-pubkey', 'Only publickeys accounts')
     .on('--help', function () {
       console.log('')
@@ -303,7 +302,10 @@ function createAccounts(chainId) {
     , chainId: chainId
   })
 
-  let user = keyUsers[userIndex]
+  let user
+  do {
+    user = keyUsers[userIndex]
+  } while (user.account != 'mbpf1mmslx.m')
   newAccount(eos, creator, user.account
     , user.ownerPublicKey, user.activePublicKey)
 }
