@@ -1,5 +1,27 @@
 # MEET.ONE Sidechain Preparation Tools
 
+## 0. [Optional] Preparation
+
+You may need to install/update nodejs.
+
+**Ubuntu** reference: <https://github.com/nodesource/distributions/blob/master/README.md>
+
+```
+curl -sL https://deb.nodesource.com/setup_11.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+You may need to install/update yarn.
+
+**Ubuntu** reference: <https://yarnpkg.com/en/docs/install#debian-stable>
+
+```
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
+sudo apt-get update && sudo apt-get install --no-install-recommends yarn
+```
+
 ## 1. Install required nodejs modules
 
 ```
@@ -60,4 +82,16 @@ node 3-create-sidechain-accounts.js mainnet-2-info.txt
 
 ```
 node 4-export-meetone-accounts.js -m
+```
+
+### Get balances of MEET.ONE accounts
+
+```
+node 5-get-meetone-balancei.js -m mainnet-4-meetone-accounts.txt
+```
+
+### Sort MEET.ONE accounts by balance
+
+```
+node 6-sort-balance.js mainnet-5-meetone-balance.txt
 ```
