@@ -40,6 +40,7 @@ const rl = readline.createInterface({input: rs, crlfDelay: Infinity})
 
 let lineNumber = 0
 let balance = 0.0
+let staked = 0.0
 let cpu = 0.0
 let net = 0.0
 
@@ -47,8 +48,11 @@ rl.on('line', (line) => {
   lineNumber ++
   let jo = JSON.parse(line)
   if (jo) {
-    if (jo.account_name == 'eosio.stake') {
-      console.log('eosio.stake balance: ' + jo.core_liquid_balance)
+    if (jo.account_name.substring(0, 6) == 'eosio.') {
+      if (jo.account_name == 'eosio.stake') {
+        staked = parseFloat(jo.core_liquid_balance)
+      }
+      console.log(jo.account_name + ' balance: ' + jo.core_liquid_balance)
     } else {
       if (jo.core_liquid_balance) {
         balance += parseFloat(jo.core_liquid_balance)
@@ -66,4 +70,5 @@ rl.on('close', () => {
   console.log('Total balance: ' + balance)
   console.log('Total staked EOS for CPU: ' + cpu)
   console.log('Total staked EOS for NET: ' + net)
+  console.log('Refunding EOS: ' + (staked - cpu - net))
 })
