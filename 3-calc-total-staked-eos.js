@@ -39,6 +39,7 @@ const rs = fs.createReadStream(inputPath
 const rl = readline.createInterface({input: rs, crlfDelay: Infinity})
 
 let lineNumber = 0
+let balance = 0.0
 let cpu = 0.0
 let net = 0.0
 
@@ -46,6 +47,8 @@ rl.on('line', (line) => {
   lineNumber ++
   let jo = JSON.parse(line)
   if (jo) {
+    balance += parseFloat(jo.core_liquid_balance)
+
     let res = jo.total_resources
     cpu += parseFloat(res.cpu_weight)
     net += parseFloat(res.net_weight)
@@ -55,6 +58,7 @@ rl.on('line', (line) => {
 })
 
 rl.on('close', () => {
+  console.log('Total balance: ' + balance)
   console.log('Total staked EOS for CPU: ' + cpu)
   console.log('Total staked EOS for NET: ' + net)
 })

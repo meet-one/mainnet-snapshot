@@ -304,7 +304,7 @@ function createAccounts(chainId) {
 
   let user
   do {
-    user = keyUsers[userIndex]
+    user = keyUsers[userIndex++]
   } while (user.account != 'mbpf1mmslx.m')
   newAccount(eos, creator, user.account
     , user.ownerPublicKey, user.activePublicKey)
