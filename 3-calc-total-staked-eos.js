@@ -47,10 +47,13 @@ rl.on('line', (line) => {
   lineNumber ++
   let jo = JSON.parse(line)
   if (jo) {
-    if (jo.core_liquid_balance) {
-      balance += parseFloat(jo.core_liquid_balance)
+    if (jo.account_name == 'eosio.stake') {
+      console.log('eosio.stake balance: ' + jo.core_liquid_balance)
+    } else {
+      if (jo.core_liquid_balance) {
+        balance += parseFloat(jo.core_liquid_balance)
+      }
     }
-
     let res = jo.total_resources
     cpu += parseFloat(res.cpu_weight)
     net += parseFloat(res.net_weight)
