@@ -49,7 +49,7 @@ rl.on('line', (line) => {
   let jo = JSON.parse(line)
   if (jo) {
     if (jo.core_liquid_balance) {
-      if (jo.account_name.substring(0, 6) == 'eosio.') {
+      if (jo.privileged || jo.account_name.substring(0, 6) == 'eosio.') {
         if (jo.account_name == 'eosio.stake') {
           staked = parseFloat(jo.core_liquid_balance)
         }
