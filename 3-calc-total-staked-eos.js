@@ -47,7 +47,9 @@ rl.on('line', (line) => {
   lineNumber ++
   let jo = JSON.parse(line)
   if (jo) {
-    balance += parseFloat(jo.core_liquid_balance)
+    if (jo.core_liquid_balance) {
+      balance += parseFloat(jo.core_liquid_balance)
+    }
 
     let res = jo.total_resources
     cpu += parseFloat(res.cpu_weight)
