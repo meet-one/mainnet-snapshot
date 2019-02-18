@@ -67,8 +67,8 @@ rl.on('line', (line) => {
 })
 
 rl.on('close', () => {
-  console.log('\nTotal normal account balance: ' + balance)
-  console.log('Total staked EOS for CPU: ' + cpu)
-  console.log('Total staked EOS for NET: ' + net)
-  console.log('Refunding EOS: ' + (staked - cpu - net))
+  console.log('\nTotal normal account balance: ' + balance.toFixed(4))
+  console.log('Total staked EOS for CPU: ' + cpu.toFixed(4))
+  console.log('Total staked EOS for NET: ' + net.toFixed(4))
+  console.log('Refunding EOS: ' + (staked - cpu - net).toFixed(4))
 })
