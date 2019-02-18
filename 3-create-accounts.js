@@ -131,91 +131,94 @@ let set_owner_permission_string = '\n'
 
 rl.on('line', (line) => {
   let jo = JSON.parse(line)
-  if (jo.account_name && jo.permissions) {
-    let has_owner_keys = false
-    let owner_key
-    let owner_required_auth
-
-    let has_active_keys = false
-    let active_key
-
-    let need_set_permissions = false
-    let need_set_owner_permission = false
-
-    for (let perm of jo.permissions) {
-      let need_set_a_permission = false
-
-      if (perm.required_auth.keys.length > 0) {
-        switch (perm.perm_name) {
-          case 'owner':
-            has_owner_keys = true
-            owner_required_auth = perm.required_auth
-            owner_key = owner_required_auth.keys[0].key
-            if (owner_key.substr(0, 3) != 'EOS'
-              && owner_key.substr(0, 7) != 'PUB_R1_') {
-              throw new Error(line)
-            }
-            break
-          case 'active':
-            has_active_keys = true
-            active_key = perm.required_auth.keys[0].key
-            if (active_key.substr(0, 3) != 'EOS'
-              && active_key.substr(0, 7) != 'PUB_R1_') {
-              throw new Error(line)
-            }
-            break
-          default:
-          need_set_a_permission = true
-            break
-        }
-      }
-
-      if (perm.required_auth.accounts.length > 0) {
-        need_set_a_permission = true
-      }
-
-      if (need_set_a_permission) {
-        need_set_permissions = true
-        if (perm.perm_name == 'owner') {
-          need_set_owner_permission = true
-          set_owner_permission_string
-            += 'cleos -u $server_url set account permission '
-            + jo.account_name + ' ' + perm.perm_name + ' \''
-            + JSON.stringify(perm.required_auth) + '\' ' + perm.parent
-            + ' -p ' + jo.account_name + '@owner\n'
-        } else {
-          set_permission_string
-            += 'cleos -u $server_url set account permission '
-            + jo.account_name + ' ' + perm.perm_name + ' \''
-            + JSON.stringify(perm.required_auth) + '\' ' + perm.parent
-            + ' -p ' + jo.account_name + '@owner\n'
-        }
-      }
-    }
-
-    if (need_set_permissions || !has_owner_keys) {
-      if (need_set_permissions && !need_set_owner_permission) {
-        set_owner_permission_string
-          += 'cleos -u $server_url set account permission '
-          + jo.account_name + ' owner \''
-          + JSON.stringify(owner_required_auth) + '\' -p '
-          + jo.account_name + '@owner\n'
-      }
-      owner_key = '$default_key'
-    }
-    if (!has_active_keys) {
-      active_key = owner_key
-    }
-
-    ws.write('cleos -u $server_url system newaccount'
-      + ' --stake-net "$stake_net"'
-      + ' --stake-cpu "$stake_cpu"'
-      + ' --buy-ram-kbytes $buy_ram_kbytes'
-      + ' $creator ' + jo.account_name + ' ' + owner_key + ' ' + active_key
-      + '\n')
-  } else {
+  if (!jo.account_name || !jo.permissions) {
     throw new Error(line)
   }
+  if (jo.privileged || jo.account_name.substring(0, 6) == 'eosio.') {
+    return
+  }
+
+  let has_owner_keys = false
+  let owner_key
+  let owner_required_auth
+
+  let has_active_keys = false
+  let active_key
+
+  let need_set_permissions = false
+  let need_set_owner_permission = false
+
+  for (let perm of jo.permissions) {
+    let need_set_a_permission = false
+
+    if (perm.required_auth.keys.length > 0) {
+      switch (perm.perm_name) {
+        case 'owner':
+          has_owner_keys = true
+          owner_required_auth = perm.required_auth
+          owner_key = owner_required_auth.keys[0].key
+          if (owner_key.substr(0, 3) != 'EOS'
+            && owner_key.substr(0, 7) != 'PUB_R1_') {
+            throw new Error(line)
+          }
+          break
+        case 'active':
+          has_active_keys = true
+          active_key = perm.required_auth.keys[0].key
+          if (active_key.substr(0, 3) != 'EOS'
+            && active_key.substr(0, 7) != 'PUB_R1_') {
+            throw new Error(line)
+          }
+          break
+        default:
+        need_set_a_permission = true
+          break
+      }
+    }
+
+    if (perm.required_auth.accounts.length > 0) {
+      need_set_a_permission = true
+    }
+
+    if (need_set_a_permission) {
+      need_set_permissions = true
+      if (perm.perm_name == 'owner') {
+        need_set_owner_permission = true
+        set_owner_permission_string
+          += 'cleos -u $server_url set account permission '
+          + jo.account_name + ' ' + perm.perm_name + ' \''
+          + JSON.stringify(perm.required_auth) + '\' ' + perm.parent
+          + ' -p ' + jo.account_name + '@owner\n'
+      } else {
+        set_permission_string
+          += 'cleos -u $server_url set account permission '
+          + jo.account_name + ' ' + perm.perm_name + ' \''
+          + JSON.stringify(perm.required_auth) + '\' ' + perm.parent
+          + ' -p ' + jo.account_name + '@owner\n'
+      }
+    }
+  }
+
+  if (need_set_permissions || !has_owner_keys) {
+    if (need_set_permissions && !need_set_owner_permission) {
+      set_owner_permission_string
+        += 'cleos -u $server_url set account permission '
+        + jo.account_name + ' owner \''
+        + JSON.stringify(owner_required_auth) + '\' -p '
+        + jo.account_name + '@owner\n'
+    }
+    owner_key = '$default_key'
+  }
+  if (!has_active_keys) {
+    active_key = owner_key
+  }
+
+  ws.write('cleos -u $server_url system newaccount'
+    + ' --stake-net "$stake_net"'
+    + ' --stake-cpu "$stake_cpu"'
+    + ' --buy-ram-kbytes $buy_ram_kbytes'
+    + ' $creator ' + jo.account_name + ' ' + owner_key + ' ' + active_key
+    + '\n')
 })
 
 rl.on('close', () => {

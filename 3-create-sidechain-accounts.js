@@ -174,100 +174,103 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
 
   rl.on('line', (line) => {
     let jo = JSON.parse(line)
-    if (jo.account_name && jo.permissions) {
-      let sidechain_account = map.get(jo.account_name)
-
-      let has_owner_keys = false
-      let owner_key
-      let owner_required_auth
-
-      let has_active_keys = false
-      let active_key
-
-      let need_set_permissions = false
-      let need_set_owner_permission = false
-
-      for (let perm of jo.permissions) {
-        let need_set_a_permission = false
-
-        if (perm.required_auth.accounts.length > 0) {
-          need_set_a_permission = true
-
-          if (onlyPubkey) {
-            return
-          }
-        }
-
-        if (perm.required_auth.keys.length > 0) {
-          switch (perm.perm_name) {
-            case 'owner':
-              has_owner_keys = true
-              owner_required_auth = perm.required_auth
-              owner_key = owner_required_auth.keys[0].key
-              if (owner_key.substr(0, 3) != 'EOS'
-                && owner_key.substr(0, 7) != 'PUB_R1_') {
-                throw new Error(line)
-              }
-              break
-            case 'active':
-              has_active_keys = true
-              active_key = perm.required_auth.keys[0].key
-              if (active_key.substr(0, 3) != 'EOS'
-                && active_key.substr(0, 7) != 'PUB_R1_') {
-                throw new Error(line)
-              }
-              break
-            default:
-              need_set_a_permission = true
-              if (onlyPubkey) {
-                return
-              }
-              break
-          }
-        }
-
-        if (need_set_a_permission) {
-          need_set_permissions = true
-          if (perm.perm_name == 'owner') {
-            need_set_owner_permission = true
-            set_owner_permission_string
-              += 'cleos -u $server_url set account permission '
-              + sidechain_account + ' ' + perm.perm_name + ' \''
-              + replaceActor(perm.required_auth) + '\' ' + perm.parent
-              + ' -p ' + sidechain_account + '@owner\n'
-          } else {
-            set_permission_string
-              += 'cleos -u $server_url set account permission '
-              + sidechain_account + ' ' + perm.perm_name + ' \''
-              + replaceActor(perm.required_auth) + '\' ' + perm.parent
-              + ' -p ' + sidechain_account + '@owner\n'
-          }
-        }
-      }
-
-      if (need_set_permissions || !has_owner_keys) {
-        if (need_set_permissions && !need_set_owner_permission) {
-          set_owner_permission_string
-            += 'cleos -u $server_url set account permission '
-            + sidechain_account + ' owner \''
-            + replaceActor(owner_required_auth) + '\' -p '
-            + sidechain_account + '@owner\n'
-        }
-        owner_key = '$default_key'
-      }
-      if (!has_active_keys) {
-        active_key = owner_key
-      }
-
-      ws.write('echo ' + jo.account_name + ' # ' + sidechain_account
-        + '\ncleos -u $server_url system newaccount $creator '
-        + sidechain_account + ' ' + owner_key + ' ' + active_key
-        + ' --stake-net "$stake_net"'
-        + ' --stake-cpu "$stake_cpu"'
-        + ' --buy-ram-kbytes $buy_ram_kbytes\n')
-    } else {
+    if (!jo.account_name || !jo.permissions) {
       throw new Error(line)
     }
+    if (jo.privileged || jo.account_name.substring(0, 6) == 'eosio.') {
+      return
+    }
+
+    let sidechain_account = map.get(jo.account_name)
+
+    let has_owner_keys = false
+    let owner_key
+    let owner_required_auth
+
+    let has_active_keys = false
+    let active_key
+
+    let need_set_permissions = false
+    let need_set_owner_permission = false
+
+    for (let perm of jo.permissions) {
+      let need_set_a_permission = false
+
+      if (perm.required_auth.accounts.length > 0) {
+        need_set_a_permission = true
+
+        if (onlyPubkey) {
+          return
+        }
+      }
+
+      if (perm.required_auth.keys.length > 0) {
+        switch (perm.perm_name) {
+          case 'owner':
+            has_owner_keys = true
+            owner_required_auth = perm.required_auth
+            owner_key = owner_required_auth.keys[0].key
+            if (owner_key.substr(0, 3) != 'EOS'
+              && owner_key.substr(0, 7) != 'PUB_R1_') {
+              throw new Error(line)
+            }
+            break
+          case 'active':
+            has_active_keys = true
+            active_key = perm.required_auth.keys[0].key
+            if (active_key.substr(0, 3) != 'EOS'
+              && active_key.substr(0, 7) != 'PUB_R1_') {
+              throw new Error(line)
+            }
+            break
+          default:
+            need_set_a_permission = true
+            if (onlyPubkey) {
+              return
+            }
+            break
+        }
+      }
+
+      if (need_set_a_permission) {
+        need_set_permissions = true
+        if (perm.perm_name == 'owner') {
+          need_set_owner_permission = true
+          set_owner_permission_string
+            += 'cleos -u $server_url set account permission '
+            + sidechain_account + ' ' + perm.perm_name + ' \''
+            + replaceActor(perm.required_auth) + '\' ' + perm.parent
+            + ' -p ' + sidechain_account + '@owner\n'
+        } else {
+          set_permission_string
+            += 'cleos -u $server_url set account permission '
+            + sidechain_account + ' ' + perm.perm_name + ' \''
+            + replaceActor(perm.required_auth) + '\' ' + perm.parent
+            + ' -p ' + sidechain_account + '@owner\n'
+        }
+      }
+    }
+
+    if (need_set_permissions || !has_owner_keys) {
+      if (need_set_permissions && !need_set_owner_permission) {
+        set_owner_permission_string
+          += 'cleos -u $server_url set account permission '
+          + sidechain_account + ' owner \''
+          + replaceActor(owner_required_auth) + '\' -p '
+          + sidechain_account + '@owner\n'
+      }
+      owner_key = '$default_key'
+    }
+    if (!has_active_keys) {
+      active_key = owner_key
+    }
+
+    ws.write('echo ' + jo.account_name + ' # ' + sidechain_account
+      + '\ncleos -u $server_url system newaccount $creator '
+      + sidechain_account + ' ' + owner_key + ' ' + active_key
+      + ' --stake-net "$stake_net"'
+      + ' --stake-cpu "$stake_cpu"'
+      + ' --buy-ram-kbytes $buy_ram_kbytes\n')
   })
 
   rl.on('close', () => {
