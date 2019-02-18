@@ -11,10 +11,10 @@
 const CODE = 'eosio'
 const TABLE = 'userres'
 const LIMIT = 10000
-const DEFAULT_OUTPUT_FILE_NAME_PREFIX = '1-accounts@'
 
 let url = ''
 let outputPath = ''
+let tableName = TABLE
 
 // parse arguments
 {
@@ -31,6 +31,7 @@ let outputPath = ''
     .option('-s, --sidechain', 'Equal to --url ' + CONST.SIDECHAIN.URL)
     .option('-o, --output <FILE>', 'Write to FILE, will be overwritten!')
     .option('-p, --output-prefix <NAME>', 'Output filename prefix')
+    .option('-t, --table <TABLE>', 'Table name, default to ' + TABLE)
     .on('--help', function () {
       console.log('')
       console.log('Examples:')
@@ -61,6 +62,11 @@ let outputPath = ''
   url = u.origin
   console.log('URL: ' + url)
 
+  if (po.table) {
+    tableName = po.table
+  }
+  console.log('Table name: ' + tableName)
+
   if (po.output) {
     outputPath = po.output
   } else {
@@ -77,7 +83,7 @@ let outputPath = ''
     }
 
     const moment = require('moment')
-    outputPath += DEFAULT_OUTPUT_FILE_NAME_PREFIX
+    outputPath += '1-accounts-' + tableName + '@'
       + moment().format('YYYY-MM-DD[T]HH-mm-ss.SSS[Z]ZZ') + '.txt'
   }
   console.log('Output file: ' + outputPath)
@@ -115,7 +121,7 @@ function succeeded(res) {
       lastOne = res.more
       console.log('Next: ' + lastOne)
       eos
-        .getTableByScope(CODE, TABLE, ' ' + lastOne, -1, LIMIT)
+        .getTableByScope(CODE, tableName, ' ' + lastOne, -1, LIMIT)
         .then(succeeded, failed)
     } else {
       ws.end()
@@ -131,7 +137,7 @@ function failed(err) {
   if (retry++ < 3) {
     console.log('Retry on ' + lastOne + ' for ' + retry + ' time(s)')
     eos
-      .getTableByScope(CODE, TABLE, ' ' + lastOne, -1, LIMIT)
+      .getTableByScope(CODE, tableName, ' ' + lastOne, -1, LIMIT)
       .then(succeeded, failed)
   } else {
     console.log('Retry failed on ' + lastOne)
@@ -139,5 +145,5 @@ function failed(err) {
 }
 
 eos
-  .getTableByScope(CODE, TABLE, 0, -1, LIMIT)
+  .getTableByScope(CODE, tableName, 0, -1, LIMIT)
   .then(succeeded, failed)

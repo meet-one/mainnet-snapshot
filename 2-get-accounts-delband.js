@@ -8,7 +8,9 @@
 
 'use strict'
 
-const DEFAULT_OUTPUT_FILE_NAME_PREFIX = '2-info@'
+const CODE = 'eosio'
+const TABLE = 'delband'
+const DEFAULT_OUTPUT_FILE_NAME_PREFIX = '2-' + TABLE + '@'
 
 let inputPath = ''
 let lineNumber = 1
@@ -120,14 +122,13 @@ const lineCount = lines[lines.length - 1]
   : lines.length - 1
 console.log(`Line count: ${lineCount}`)
 
-const ws = fs.createWriteStream(outputPath
-  , { flags: 'a', encoding: 'utf8', autoClose: true }
-)
-
 let retry = 0
-GetAccountKeys()
+GetAccountDelBand()
 
-async function GetAccountKeys() {
+async function GetAccountDelBand() {
+  const ws = fs.createWriteStream(outputPath
+    , { flags: 'a', encoding: 'utf8', autoClose: true }
+  )
   while (lineNumber <= lineCount) {
     // line index = line number - 1
     let accountName = lines[lineNumber - 1]
@@ -137,15 +138,28 @@ async function GetAccountKeys() {
       console.log('[' + lineNumber + '] Retry on ' + accountName + ' for '
         + retry + ' times...')
     }
-    await eos.getAccount(accountName).then((res) => {
+    await eos.getTableRows({
+      json: true, code: CODE, scope: accountName, table: TABLE, limit: -1
+    })
+    .then((res) => {
       retry = 0
 
-      if (res) {
-        let buffer = JSON.stringify(res) + '\n'
-        ws.write(buffer)
+      if (res && res.rows) {
+        if (res.rows.length > 0) {
+          if (res.more) {
+            console.log('[' + lineNumber + '] ' + accountName + ' has more!')
+          }
+          //console.log(JSON.stringify(res.rows))
+          let staked = 0.0
+          for (let r of res.rows) {
+            staked += parseFloat(r.net_weight)
+            staked += parseFloat(r.cpu_weight)
+          }
+          ws.write(accountName + ',' + staked + '\n')
+        }
       } else {
         console.log('[' + lineNumber + '] Error on ' + accountName)
-        ws.write('{"accountName": "' + accountName + '"}')
+        //ws.write('{"accountName": "' + accountName + '"}')
       }
 
       lineNumber++
