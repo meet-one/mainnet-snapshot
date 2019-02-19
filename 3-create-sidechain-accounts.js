@@ -8,6 +8,8 @@
 
 'use strict'
 
+const SEPARATOR = ','
+
 const DEFAULT_OUTPUT_FILE_NAME = '3-create-sidechain-accounts.sh'
 const STAKE_NET = '1.0000 MEETONE'
 const STAKE_CPU = '9.0000 MEETONE'
@@ -128,7 +130,7 @@ const rs = fs.createReadStream(mapFilePath
 const rl = readline.createInterface({input: rs, crlfDelay: Infinity})
 
 rl.on('line', (line) => {
-  let e = line.split('\t')
+  let e = line.split(SEPARATOR)
   if (e.length == 2) {
     map.set(e[0], e[1])
   }

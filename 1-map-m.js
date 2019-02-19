@@ -8,6 +8,8 @@
 
 'use strict'
 
+const SEPARATOR = ','
+
 let inputPath = ''
 let outputPath = ''
 
@@ -62,7 +64,7 @@ if (fs.existsSync(outputPath)) {
   const rl = readline.createInterface({input: rs, crlfDelay: Infinity})
 
   rl.on('line', (line) => {
-    let e = line.split('\t')
+    let e = line.split(SEPARATOR)
     if (e.length == 2) {
       map.set(e[0], e[1])
     }
@@ -93,7 +95,7 @@ function mapFile(inputPath) {
       } else {
         m = randomM()
       }
-      arr.push(line + '\t' + m)
+      arr.push(line + SEPARATOR + m)
     }
   })
 
