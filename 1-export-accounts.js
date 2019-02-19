@@ -104,6 +104,8 @@ const eos = EosApi(options)
 const fs = require('fs')
 const ws = fs.createWriteStream(outputPath, { encoding: 'utf8', autoClose: true })
 
+const set = new Set()
+
 let lastOne = ''
 let retry = 0
 
@@ -112,7 +114,12 @@ function succeeded(res) {
   if (res.rows) {
     let buffer = ''
     res.rows.forEach(e => {
-      buffer += e.scope + '\n'
+      if (set.has(e.scope)) {
+        console.log('Duplicated: ' + e.scope)
+      } else {
+        set.add(e.scope)
+        buffer += e.scope + '\n'
+      }
     })
     ws.write(buffer)
   }

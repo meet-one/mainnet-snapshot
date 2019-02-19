@@ -124,16 +124,14 @@ function fileToMap(filePath, map) {
   const all = fs.readFileSync(filePath, 'utf8')
   const lines = all.split(/\n/)
   const lineCount = lines[lines.length - 1] ? lines.length : lines.length - 1
-  let lineNumber = 0
 
   console.log(`${filePath}, Line count: ${lineCount}`)
-  for (let line of lines) {
-    ++lineNumber
-    const part = line.split(',')
+  for (let i = 0; i < lineCount; ++i) {
+    const part = lines[i].split(SEPARATOR)
     if (part.length == 2) {
       let balance = parseFloat(part[1])
       if (map.has(part[0])) {
-        console.log('[' + lineNumber + '] Skip duplicated account: ' + part[0])
+        console.log('[' + (i + 1) + '] Skip duplicated account: ' + lines[i])
       } else {
         map.set(part[0], balance)
       }
