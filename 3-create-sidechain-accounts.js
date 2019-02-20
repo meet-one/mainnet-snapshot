@@ -272,7 +272,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
       + sidechain_account + ' ' + owner_key + ' ' + active_key
       + ' --stake-net "$stake_net"'
       + ' --stake-cpu "$stake_cpu"'
-      + ' --buy-ram-kbytes $buy_ram_kbytes\n')
+      + ' --buy-ram-bytes $buy_ram_bytes\n')
   })
 
   rl.on('close', () => {
