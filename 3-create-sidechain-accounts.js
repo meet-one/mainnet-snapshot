@@ -272,6 +272,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
       + sidechain_account + ' ' + owner_key + ' ' + active_key
       + ' --stake-net "$stake_net"'
       + ' --stake-cpu "$stake_cpu"'
+      + ' --transfer'
       + ' --buy-ram-bytes $buy_ram_bytes\n')
   })
 
