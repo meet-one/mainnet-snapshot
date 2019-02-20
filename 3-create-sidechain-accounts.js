@@ -13,7 +13,7 @@ const SEPARATOR = ','
 const DEFAULT_OUTPUT_FILE_NAME = '3-create-sidechain-accounts.sh'
 const STAKE_NET = '1.0000 MEETONE'
 const STAKE_CPU = '9.0000 MEETONE'
-const BUY_RAM_KBYTES = '4'
+const BUY_RAM_BYTES = '3584'
 
 let inputPath = ''
 let mapFilePath = ''
@@ -169,7 +169,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
   ws.write('creator="' + creator + '"\n')
   ws.write('stake_net="' + STAKE_NET + '"\n')
   ws.write('stake_cpu="' + STAKE_CPU + '"\n')
-  ws.write('buy_ram_kbytes="' + BUY_RAM_KBYTES + '"\n')
+  ws.write('buy_ram_bytes="' + BUY_RAM_BYTES + '"\n')
 
   let set_permission_string = '\n'
   let set_owner_permission_string = '\n'
