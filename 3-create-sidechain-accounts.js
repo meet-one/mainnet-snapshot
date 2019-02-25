@@ -211,6 +211,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
   ws2.write('server_url="' + url + '"\n')
 
   let permissionSet = new Set()
+  let set_permission_map = new Map()
 
   rl.on('line', (line) => {
     let jo = JSON.parse(line)
@@ -222,8 +223,6 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
     }
 
     let sidechain_account = map.get(jo.account_name)
-
-    let set_permission_map = new Map()
 
     let has_owner_keys = false
     let owner_key
@@ -303,6 +302,8 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
       active_key = owner_key
     }
 
+    permissionSet.add(jo.account_name + ' owner')
+
     if (!excludeSet.has(sidechain_account)) {
       ws.write('echo ' + jo.account_name + ' # ' + sidechain_account
         + '\ncleos -u $server_url system newaccount $creator '
@@ -312,6 +313,10 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
         + ' --transfer'
         + ' --buy-ram-bytes $buy_ram_bytes\n')
     }
+  })
+
+  rl.on('close', () => {
+    ws.close()
 
     let mapSize = set_permission_map.size
     while (mapSize) {
@@ -330,20 +335,18 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
           ws1.write('cleos -u $server_url set account permission '
             + key + ' \''
             + JSON.stringify(value) + '\' -p '
-            + jo.account_name + '@owner\n')
+            + key.split(' ')[0] + '@owner\n')
           set_permission_map.delete(key)
         }
       }
       if (mapSize == set_permission_map.size) {
-        throw new Error('Infinite loop @' + line)
+        throw new Error('Infinite loop @' + mapSize)
       }
       mapSize = set_permission_map.size
     }
-  })
+    ws1.close()
 
-  rl.on('close', () => {
-    ws.write(set_permission_string)
-    ws.write(set_owner_permission_string)
+    ws2.close()
   })
 }
 

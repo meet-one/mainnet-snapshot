@@ -230,6 +230,10 @@ rl.on('line', (line) => {
     + ' --buy-ram-kbytes $buy_ram_kbytes'
     + ' $creator ' + jo.account_name + ' ' + owner_key + ' ' + active_key
     + '\n')
+})
+
+rl.on('close', () => {
+  ws.close()
 
   let mapSize = set_permission_map.size
   while (mapSize) {
@@ -248,19 +252,16 @@ rl.on('line', (line) => {
         ws1.write('cleos -u $server_url set account permission '
           + key + ' \''
           + JSON.stringify(value) + '\' -p '
-          + jo.account_name + '@owner\n')
+          + key.split(' ')[0] + '@owner\n')
         set_permission_map.delete(key)
       }
     }
     if (mapSize == set_permission_map.size) {
-      throw new Error('Infinite loop @' + line)
+      throw new Error('Infinite loop @' + mapSize)
     }
     mapSize = set_permission_map.size
   }
-})
-
-rl.on('close', () => {
-  ws.close()
   ws1.close()
+
   ws2.close()
 })
