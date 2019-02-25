@@ -169,6 +169,17 @@ function replaceActor(jo) {
   return JSON.stringify(required_auth)
 }
 
+function replaceAuthActor(jo) {
+  if (jo.required_auth.accounts) {
+    for (let a of jo.required_auth.accounts) {
+      if (a.permission) {
+        a.permission.actor = map.get(a.permission.actor)
+      }
+    }
+  }
+  return jo
+}
+
 function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
   const rs = fs.createReadStream(inputPath
     , { encoding: 'utf8', autoClose: true }
@@ -178,17 +189,28 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
   const ws = fs.createWriteStream(outputPath
     , { flags: 'w', encoding: 'utf8', autoClose: true }
   )
+  const ws1 = fs.createWriteStream(outputPath + '.1'
+    , { flags: 'w', encoding: 'utf8', autoClose: true }
+  )
+  const ws2 = fs.createWriteStream(outputPath + '.2'
+    , { flags: 'w', encoding: 'utf8', autoClose: true }
+  )
   ws.write('echo Run "cleos wallet unlock" first\n')
   ws.write('server_url="' + url + '"\n')
-  ws.write('default_key="EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"'
+  ws.write('default_key="EOS8iANEmGQ6ExAP22KF4vRu9hPvMNgHmVFyMMF5UspNMGzyukhV9"'
     + '\n')
   ws.write('creator="' + creator + '"\n')
   ws.write('stake_net="' + STAKE_NET + '"\n')
   ws.write('stake_cpu="' + STAKE_CPU + '"\n')
   ws.write('buy_ram_bytes="' + BUY_RAM_BYTES + '"\n')
 
-  let set_permission_string = '\n'
-  let set_owner_permission_string = '\n'
+  ws1.write('echo Run "cleos wallet unlock" first\n')
+  ws1.write('server_url="' + url + '"\n')
+
+  ws2.write('echo Run "cleos wallet unlock" first\n')
+  ws2.write('server_url="' + url + '"\n')
+
+  let permissionSet = new Set()
 
   rl.on('line', (line) => {
     let jo = JSON.parse(line)
@@ -200,6 +222,8 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
     }
 
     let sidechain_account = map.get(jo.account_name)
+
+    let set_permission_map = new Map()
 
     let has_owner_keys = false
     let owner_key
@@ -235,6 +259,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
             break
           case 'active':
             has_active_keys = true
+            permissionSet.add(jo.account_name + ' active')
             active_key = perm.required_auth.keys[0].key
             if (active_key.substr(0, 3) != 'EOS'
               && active_key.substr(0, 7) != 'PUB_R1_') {
@@ -254,28 +279,23 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
         need_set_permissions = true
         if (perm.perm_name == 'owner') {
           need_set_owner_permission = true
-          set_owner_permission_string
-            += 'cleos -u $server_url set account permission '
+          ws2.write('cleos -u $server_url set account permission '
             + sidechain_account + ' ' + perm.perm_name + ' \''
             + replaceActor(perm.required_auth) + '\' ' + perm.parent
-            + ' -p ' + sidechain_account + '@owner\n'
+            + ' -p ' + sidechain_account + '@owner\n')
         } else {
-          set_permission_string
-            += 'cleos -u $server_url set account permission '
-            + sidechain_account + ' ' + perm.perm_name + ' \''
-            + replaceActor(perm.required_auth) + '\' ' + perm.parent
-            + ' -p ' + sidechain_account + '@owner\n'
+          let permName = sidechain_account + ' ' + perm.perm_name
+          set_permission_map.set(permName, replaceAuthActor(perm))
         }
       }
     }
 
     if (need_set_permissions || !has_owner_keys) {
       if (need_set_permissions && !need_set_owner_permission) {
-        set_owner_permission_string
-          += 'cleos -u $server_url set account permission '
+        ws2.write('cleos -u $server_url set account permission '
           + sidechain_account + ' owner \''
           + replaceActor(owner_required_auth) + '\' -p '
-          + sidechain_account + '@owner\n'
+          + sidechain_account + '@owner\n')
       }
       owner_key = '$default_key'
     }
@@ -291,6 +311,33 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
         + ' --stake-cpu "$stake_cpu"'
         + ' --transfer'
         + ' --buy-ram-bytes $buy_ram_bytes\n')
+    }
+
+    let mapSize = set_permission_map.size
+    while (mapSize) {
+      for (let [key, value] of set_permission_map) {
+        let allIn = true
+        for (let a of value.required_auth.accounts) {
+          let permName = a.permission.actor + ' ' + a.permission.permission
+          if (!permissionSet.has(permName)) {
+            allIn = false
+            break
+          }
+        }
+        if (allIn) {
+          permissionSet.add(key)
+          //console.log(key, JSON.stringify(value))
+          ws1.write('cleos -u $server_url set account permission '
+            + key + ' \''
+            + JSON.stringify(value) + '\' -p '
+            + jo.account_name + '@owner\n')
+          set_permission_map.delete(key)
+        }
+      }
+      if (mapSize == set_permission_map.size) {
+        throw new Error('Infinite loop @' + line)
+      }
+      mapSize = set_permission_map.size
     }
   })
 

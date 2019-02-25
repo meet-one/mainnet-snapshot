@@ -117,6 +117,12 @@ const rl = readline.createInterface({ input: rs, crlfDelay: Infinity })
 const ws = fs.createWriteStream(outputPath
   , { flags: 'w', encoding: 'utf8', autoClose: true }
 )
+const ws1 = fs.createWriteStream(outputPath + '.1'
+  , { flags: 'w', encoding: 'utf8', autoClose: true }
+)
+const ws2 = fs.createWriteStream(outputPath + '.2'
+  , { flags: 'w', encoding: 'utf8', autoClose: true }
+)
 ws.write('echo Run "cleos wallet unlock" first\n')
 ws.write('server_url="' + url + '"\n')
 ws.write('default_key="EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"'
@@ -126,8 +132,13 @@ ws.write('stake_net="' + STAKE_NET + '"\n')
 ws.write('stake_cpu="' + STAKE_CPU + '"\n')
 ws.write('buy_ram_kbytes="' + BUY_RAM_KBYTES + '"\n')
 
-let set_permission_string = '\n'
-let set_owner_permission_string = '\n'
+ws1.write('echo Run "cleos wallet unlock" first\n')
+ws1.write('server_url="' + url + '"\n')
+
+ws2.write('echo Run "cleos wallet unlock" first\n')
+ws2.write('server_url="' + url + '"\n')
+
+let permissionSet = new Set()
 
 rl.on('line', (line) => {
   let jo = JSON.parse(line)
@@ -137,6 +148,8 @@ rl.on('line', (line) => {
   if (jo.privileged || jo.account_name.substring(0, 6) == 'eosio.') {
     return
   }
+
+  let set_permission_map = new Map()
 
   let has_owner_keys = false
   let owner_key
@@ -164,6 +177,7 @@ rl.on('line', (line) => {
           break
         case 'active':
           has_active_keys = true
+          permissionSet.add(jo.account_name + ' active')
           active_key = perm.required_auth.keys[0].key
           if (active_key.substr(0, 3) != 'EOS'
             && active_key.substr(0, 7) != 'PUB_R1_') {
@@ -171,7 +185,7 @@ rl.on('line', (line) => {
           }
           break
         default:
-        need_set_a_permission = true
+          need_set_a_permission = true
           break
       }
     }
@@ -184,28 +198,23 @@ rl.on('line', (line) => {
       need_set_permissions = true
       if (perm.perm_name == 'owner') {
         need_set_owner_permission = true
-        set_owner_permission_string
-          += 'cleos -u $server_url set account permission '
+        ws2.write('cleos -u $server_url set account permission '
           + jo.account_name + ' ' + perm.perm_name + ' \''
           + JSON.stringify(perm.required_auth) + '\' ' + perm.parent
-          + ' -p ' + jo.account_name + '@owner\n'
+          + ' -p ' + jo.account_name + '@owner\n')
       } else {
-        set_permission_string
-          += 'cleos -u $server_url set account permission '
-          + jo.account_name + ' ' + perm.perm_name + ' \''
-          + JSON.stringify(perm.required_auth) + '\' ' + perm.parent
-          + ' -p ' + jo.account_name + '@owner\n'
+        let permName = jo.account_name + ' ' + perm.perm_name
+        set_permission_map.set(permName, perm)
       }
     }
   }
 
   if (need_set_permissions || !has_owner_keys) {
     if (need_set_permissions && !need_set_owner_permission) {
-      set_owner_permission_string
-        += 'cleos -u $server_url set account permission '
+      ws2.write('cleos -u $server_url set account permission '
         + jo.account_name + ' owner \''
         + JSON.stringify(owner_required_auth) + '\' -p '
-        + jo.account_name + '@owner\n'
+        + jo.account_name + '@owner\n')
     }
     owner_key = '$default_key'
   }
@@ -213,15 +222,45 @@ rl.on('line', (line) => {
     active_key = owner_key
   }
 
+  permissionSet.add(jo.account_name + ' owner')
+
   ws.write('cleos -u $server_url system newaccount'
     + ' --stake-net "$stake_net"'
     + ' --stake-cpu "$stake_cpu"'
     + ' --buy-ram-kbytes $buy_ram_kbytes'
     + ' $creator ' + jo.account_name + ' ' + owner_key + ' ' + active_key
     + '\n')
+
+  let mapSize = set_permission_map.size
+  while (mapSize) {
+    for (let [key, value] of set_permission_map) {
+      let allIn = true
+      for (let a of value.required_auth.accounts) {
+        let permName = a.permission.actor + ' ' + a.permission.permission
+        if (!permissionSet.has(permName)) {
+          allIn = false
+          break
+        }
+      }
+      if (allIn) {
+        permissionSet.add(key)
+        //console.log(key, JSON.stringify(value))
+        ws1.write('cleos -u $server_url set account permission '
+          + key + ' \''
+          + JSON.stringify(value) + '\' -p '
+          + jo.account_name + '@owner\n')
+        set_permission_map.delete(key)
+      }
+    }
+    if (mapSize == set_permission_map.size) {
+      throw new Error('Infinite loop @' + line)
+    }
+    mapSize = set_permission_map.size
+  }
 })
 
 rl.on('close', () => {
-  ws.write(set_permission_string)
-  ws.write(set_owner_permission_string)
+  ws.close()
+  ws1.close()
+  ws2.close()
 })
