@@ -283,7 +283,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
       active_key = owner_key
     }
 
-    if (!excludeSet.has(jo.account_name)) {
+    if (!excludeSet.has(sidechain_account)) {
       ws.write('echo ' + jo.account_name + ' # ' + sidechain_account
         + '\ncleos -u $server_url system newaccount $creator '
         + sidechain_account + ' ' + owner_key + ' ' + active_key
