@@ -170,14 +170,15 @@ function replaceActor(jo) {
 }
 
 function replaceAuthActor(jo) {
-  if (jo.required_auth.accounts) {
-    for (let a of jo.required_auth.accounts) {
+  let nj = jo
+  if (nj.required_auth.accounts) {
+    for (let a of nj.required_auth.accounts) {
       if (a.permission) {
         a.permission.actor = map.get(a.permission.actor)
       }
     }
   }
-  return jo
+  return nj
 }
 
 function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
@@ -302,7 +303,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
       active_key = owner_key
     }
 
-    permissionSet.add(jo.account_name + ' owner')
+    permissionSet.add(sidechain_account + ' owner')
 
     if (!excludeSet.has(sidechain_account)) {
       ws.write('echo ' + jo.account_name + ' # ' + sidechain_account
@@ -325,6 +326,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
         for (let a of value.required_auth.accounts) {
           let permName = a.permission.actor + ' ' + a.permission.permission
           if (!permissionSet.has(permName)) {
+            console.log(key, JSON.stringify(value))
             allIn = false
             break
           }
@@ -334,12 +336,15 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
           //console.log(key, JSON.stringify(value))
           ws1.write('cleos -u $server_url set account permission '
             + key + ' \''
-            + JSON.stringify(value) + '\' -p '
+            + JSON.stringify(value.required_auth) + '\' -p '
             + key.split(' ')[0] + '@owner\n')
           set_permission_map.delete(key)
         }
       }
       if (mapSize == set_permission_map.size) {
+        for (let [key, value] of set_permission_map) {
+          console.log(key)
+        }
         throw new Error('Infinite loop @' + mapSize)
       }
       mapSize = set_permission_map.size

@@ -139,6 +139,7 @@ ws2.write('echo Run "cleos wallet unlock" first\n')
 ws2.write('server_url="' + url + '"\n')
 
 let permissionSet = new Set()
+let set_permission_map = new Map()
 
 rl.on('line', (line) => {
   let jo = JSON.parse(line)
@@ -148,8 +149,6 @@ rl.on('line', (line) => {
   if (jo.privileged || jo.account_name.substring(0, 6) == 'eosio.') {
     return
   }
-
-  let set_permission_map = new Map()
 
   let has_owner_keys = false
   let owner_key
@@ -251,7 +250,7 @@ rl.on('close', () => {
         //console.log(key, JSON.stringify(value))
         ws1.write('cleos -u $server_url set account permission '
           + key + ' \''
-          + JSON.stringify(value) + '\' -p '
+          + JSON.stringify(value.required_auth) + '\' -p '
           + key.split(' ')[0] + '@owner\n')
         set_permission_map.delete(key)
       }
