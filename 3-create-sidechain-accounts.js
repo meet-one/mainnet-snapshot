@@ -259,7 +259,7 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
             break
           case 'active':
             has_active_keys = true
-            permissionSet.add(jo.account_name + ' active')
+            permissionSet.add(sidechain_account + ' active')
             active_key = perm.required_auth.keys[0].key
             if (active_key.substr(0, 3) != 'EOS'
               && active_key.substr(0, 7) != 'PUB_R1_') {
@@ -326,7 +326,6 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
         for (let a of value.required_auth.accounts) {
           let permName = a.permission.actor + ' ' + a.permission.permission
           if (!permissionSet.has(permName)) {
-            console.log(key, JSON.stringify(value))
             allIn = false
             break
           }
@@ -342,9 +341,9 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
         }
       }
       if (mapSize == set_permission_map.size) {
-        for (let [key, value] of set_permission_map) {
-          console.log(key)
-        }
+        // for (let [key, value] of set_permission_map) {
+        //   console.log(key)
+        // }
         throw new Error('Infinite loop @' + mapSize)
       }
       mapSize = set_permission_map.size
