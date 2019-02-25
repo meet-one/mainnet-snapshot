@@ -21,6 +21,7 @@ let url = ''
 let outputPath = ''
 let creator = ''
 let onlyPubkey = false
+let excludeFilename = ''
 
 // parse arguments
 {
@@ -44,6 +45,7 @@ let onlyPubkey = false
     .option('-o, --output <FILE>', 'Write to FILE, will be appended!')
     .option('-p, --output-prefix <NAME>', 'Output filename prefix')
     .option('--only-pubkey', 'Only publickeys accounts')
+    .option('-e, --exclude <FILE>', 'File that contains excluded accounts')
     .on('--help', function () {
       console.log('')
       console.log('Examples:')
@@ -110,12 +112,21 @@ let onlyPubkey = false
       outputPath = CONST.LOCAL.NAME + '-'
     }
 
-    outputPath += DEFAULT_OUTPUT_FILE_NAME
+    if (po.exclude) {
+      outputPath += '3-go-on.sh'
+    } else {
+      outputPath += DEFAULT_OUTPUT_FILE_NAME
+    }
   }
   console.log('Output file: ' + outputPath)
 
   onlyPubkey = !!po.onlyPubkey
   console.log('Only Publickeys accounts: ' + onlyPubkey)
+
+  if (po.exclude) {
+    excludeFilename = po.exclude
+    console.log('Exclude: ' + excludeFilename)
+  }
 }
 
 const fs = require('fs')
@@ -123,6 +134,7 @@ const readline = require('readline')
 
 // key = mainnet account, value = sidechain account
 const map = new Map()
+const excludeSet = new Set()
 
 const rs = fs.createReadStream(mapFilePath
   , {encoding: 'utf8', autoClose: true}
@@ -138,7 +150,11 @@ rl.on('line', (line) => {
 
 rl.on('close', () => {
   console.log('Map size: ' + map.size)
-  createShellScript(inputPath, outputPath, url, creator, onlyPubkey)
+  if (excludeFilename) {
+    readExcludeFile(excludeFilename)
+  } else {
+    createShellScript(inputPath, outputPath, url, creator, onlyPubkey)
+  }
 })
 
 function replaceActor(jo) {
@@ -267,17 +283,35 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
       active_key = owner_key
     }
 
-    ws.write('echo ' + jo.account_name + ' # ' + sidechain_account
-      + '\ncleos -u $server_url system newaccount $creator '
-      + sidechain_account + ' ' + owner_key + ' ' + active_key
-      + ' --stake-net "$stake_net"'
-      + ' --stake-cpu "$stake_cpu"'
-      + ' --transfer'
-      + ' --buy-ram-bytes $buy_ram_bytes\n')
+    if (!excludeSet.has(jo.account_name)) {
+      ws.write('echo ' + jo.account_name + ' # ' + sidechain_account
+        + '\ncleos -u $server_url system newaccount $creator '
+        + sidechain_account + ' ' + owner_key + ' ' + active_key
+        + ' --stake-net "$stake_net"'
+        + ' --stake-cpu "$stake_cpu"'
+        + ' --transfer'
+        + ' --buy-ram-bytes $buy_ram_bytes\n')
+    }
   })
 
   rl.on('close', () => {
     ws.write(set_permission_string)
     ws.write(set_owner_permission_string)
+  })
+}
+
+function readExcludeFile(path) {
+  const rs = fs.createReadStream(path
+    , { encoding: 'utf8', autoClose: true }
+  )
+  const rl = readline.createInterface({ input: rs, crlfDelay: Infinity })
+
+  rl.on('line', (line) => {
+    excludeSet.add(line)
+  })
+  
+  rl.on('close', () => {
+    console.log('Number of excluded accounts: ' + excludeSet.size)
+    createShellScript(inputPath, outputPath, url, creator, onlyPubkey)
   })
 }
