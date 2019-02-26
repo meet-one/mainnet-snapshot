@@ -170,6 +170,15 @@ function replaceActor(jo) {
       }
     }
   }
+  required_auth.accounts.sort((a, b) => {
+    if (a.permission.actor < b.permission.actor) {
+      return -1
+    }
+    if (a.permission.actor > b.permission.actor) {
+      return 1
+    }
+    return 0
+  })
   return JSON.stringify(required_auth)
 }
 
@@ -182,6 +191,15 @@ function replaceAuthActor(jo) {
       }
     }
   }
+  nj.required_auth.accounts.sort((a, b) => {
+    if (a.permission.actor < b.permission.actor) {
+      return -1
+    }
+    if (a.permission.actor > b.permission.actor) {
+      return 1
+    }
+    return 0
+  })
   return nj
 }
 
