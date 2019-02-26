@@ -240,7 +240,11 @@ rl.on('close', () => {
       let allIn = true
       for (let a of value.required_auth.accounts) {
         let permName = a.permission.actor + ' ' + a.permission.permission
-        if (!permissionSet.has(permName)) {
+        if (permName != key
+          && 'eosio' != a.permission.actor
+          && 'eosio.' != a.permission.actor.substring(0, 6)
+          && 'eosio.code' != a.permission.permission
+          && !permissionSet.has(permName)) {
           allIn = false
           break
         }
@@ -256,9 +260,16 @@ rl.on('close', () => {
       }
     }
     if (mapSize == set_permission_map.size) {
-      throw new Error('Infinite loop @' + mapSize)
+      console.log('Left ' + mapSize + ' item.')
+      break
     }
     mapSize = set_permission_map.size
+  }
+  for (let [key, value] of set_permission_map) {
+    ws1.write('cleos -u $server_url set account permission '
+      + key + ' \''
+      + JSON.stringify(value.required_auth) + '\' -p '
+      + key.split(' ')[0] + '@owner\n')
   }
   ws1.close()
 

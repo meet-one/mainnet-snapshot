@@ -144,7 +144,11 @@ const rl = readline.createInterface({input: rs, crlfDelay: Infinity})
 rl.on('line', (line) => {
   let e = line.split(SEPARATOR)
   if (e.length == 2) {
-    map.set(e[0], e[1])
+    if ('eosio' == e[0] || 'eosio.' == e[0].substring(0, 6)) {
+      console.log('Skip ' + e[0])
+    } else {
+      map.set(e[0], e[1])
+    }
   }
 })
 
@@ -161,7 +165,7 @@ function replaceActor(jo) {
   let required_auth = jo
   if (required_auth.accounts) {
     for (let a of required_auth.accounts) {
-      if (a.permission) {
+      if (a.permission && a.permission.actor && map.has(a.permission.actor)) {
         a.permission.actor = map.get(a.permission.actor)
       }
     }
@@ -173,7 +177,7 @@ function replaceAuthActor(jo) {
   let nj = jo
   if (nj.required_auth.accounts) {
     for (let a of nj.required_auth.accounts) {
-      if (a.permission) {
+      if (a.permission && a.permission.actor && map.has(a.permission.actor)) {
         a.permission.actor = map.get(a.permission.actor)
       }
     }
@@ -325,7 +329,11 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
         let allIn = true
         for (let a of value.required_auth.accounts) {
           let permName = a.permission.actor + ' ' + a.permission.permission
-          if (!permissionSet.has(permName)) {
+          if (permName != key
+            && 'eosio' != a.permission.actor
+            && 'eosio.' != a.permission.actor.substring(0, 6)
+            && 'eosio.code' != a.permission.permission
+            && !permissionSet.has(permName)) {
             allIn = false
             break
           }
@@ -341,12 +349,16 @@ function createShellScript(inputPath, outputPath, url, creator, onlyPubkey) {
         }
       }
       if (mapSize == set_permission_map.size) {
-        // for (let [key, value] of set_permission_map) {
-        //   console.log(key)
-        // }
-        throw new Error('Infinite loop @' + mapSize)
+        console.log('Left ' + mapSize + ' item.')
+        break
       }
       mapSize = set_permission_map.size
+    }
+    for (let [key, value] of set_permission_map) {
+      ws1.write('cleos -u $server_url set account permission '
+        + key + ' \''
+        + JSON.stringify(value.required_auth) + '\' -p '
+        + key.split(' ')[0] + '@owner\n')
     }
     ws1.close()
 
