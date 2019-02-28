@@ -35,7 +35,7 @@ let creator = ''
     .option('-m, --mainnet', 'Equal to --url ' + CONST.MAINNET.URL)
     .option('-s, --sidechain', 'Equal to --url ' + CONST.SIDECHAIN.URL)
     .option('-c, --creator <TEXT>', 'Set creator')
-    .option('-o, --output <FILE>', 'Write to FILE, will be appended!')
+    .option('-o, --output <FILE>', 'Write to FILE, will be overwritten!')
     .option('-p, --output-prefix <NAME>', 'Output filename prefix')
     .on('--help', function () {
       console.log('')

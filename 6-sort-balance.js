@@ -23,7 +23,7 @@ let outputPath = ''
     .action(function (input) {
         inputPath = input
     })
-    .option('-o, --output <FILE>', 'Write to FILE, will be appended!')
+    .option('-o, --output <FILE>', 'Write to FILE, will be overwritten!')
     .option('-p, --output-prefix <NAME>', 'Output filename prefix')
     .on('--help', function () {
         console.log('')
@@ -81,7 +81,7 @@ sorted.sort((a, b) => {
 })
 
 const ws = fs.createWriteStream(outputPath, {
-  flags: 'a',
+  flags: 'w',
   encoding: 'utf8',
   autoClose: true
 })

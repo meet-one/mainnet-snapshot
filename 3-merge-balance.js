@@ -30,7 +30,7 @@ let outputPath = ''
       delbandPath = delband
       refundsPath = refunds
     })
-    .option('-o, --output <FILE>', 'Write to FILE, will be appended!')
+    .option('-o, --output <FILE>', 'Write to FILE, will be overwritten!')
     .option('-p, --output-prefix <NAME>', 'Output filename prefix')
     .parse(process.argv)
 
@@ -103,7 +103,7 @@ rl.on('close', () => {
   fileToMap(refundsPath, refundsMap)
 
   const ws = fs.createWriteStream(outputPath, {
-    flags: 'a',
+    flags: 'w',
     encoding: 'utf8',
     autoClose: true
   })
