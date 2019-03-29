@@ -10,5 +10,5 @@ module.exports = Object.freeze({
   LOCAL: {NAME: 'local', URL: 'http://localhost:8888'},
   KYLIN: {NAME: 'kylin', URL: 'http://kylin.meet.one:8888'},
   MAINNET: {NAME: 'mainnet', URL: 'https://mainnet.meet.one'},
-  SIDECHAIN: {NAME: 'sidechain', URL: 'http://sidechain-test.meet.one:8888/'}
+  SIDECHAIN: {NAME: 'sidechain', URL: 'https://fullnode.meet.one'}
 });

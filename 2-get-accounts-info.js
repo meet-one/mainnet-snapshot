@@ -87,6 +87,8 @@ let outputPath = ''
       outputPath = CONST.KYLIN.NAME + '-'
     } else if (po.mainnet) {
       outputPath = CONST.MAINNET.NAME + '-'
+    } else if (po.sidechain) {
+      outputPath = CONST.SIDECHAIN.NAME + '-'
     } else if (po.url) {
       outputPath = u.hostname + '-'
     } else {

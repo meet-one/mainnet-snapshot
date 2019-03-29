@@ -3,18 +3,19 @@
 /**
  * @author UMU618 <umu618@hotmail.com>
  * @copyright MEET.ONE 2018
- * @description Use npm-coding-style.
+ * @description Use block-always-using-brace npm-coding-style.
  */
 
 'use strict'
 
 const CODE = 'eosio'
-const TABLE = 'userres'
-const LIMIT = 10000
+const SCOPE = 'eosio'
+const TABLE = 'voters'
+const LIMIT = -1
+const DEFAULT_OUTPUT_FILE_NAME_PREFIX = '2-' + TABLE + '@'
 
 let url = ''
 let outputPath = ''
-let tableName = TABLE
 
 // parse arguments
 {
@@ -24,14 +25,12 @@ let tableName = TABLE
     .version('0.1.0')
     .option('-u, --url <TEXT>'
       , 'the http/https URL where nodeos is running. Default to '
-      + CONST.LOCAL.URL
-    )
+      + CONST.LOCAL.URL)
     .option('-k, --kylin', 'Equal to --url ' + CONST.KYLIN.URL)
     .option('-m, --mainnet', 'Equal to --url ' + CONST.MAINNET.URL)
     .option('-s, --sidechain', 'Equal to --url ' + CONST.SIDECHAIN.URL)
-    .option('-o, --output <FILE>', 'Write to FILE, will be overwritten!')
+    .option('-o, --output <FILE>', 'Write to FILE, will be appended!')
     .option('-p, --output-prefix <NAME>', 'Output filename prefix')
-    .option('-t, --table <TABLE>', 'Table name, default to ' + TABLE)
     .on('--help', function () {
       console.log('')
       console.log('Examples:')
@@ -62,11 +61,6 @@ let tableName = TABLE
   url = u.origin
   console.log('URL: ' + url)
 
-  if (po.table) {
-    tableName = po.table
-  }
-  console.log('Table name: ' + tableName)
-
   if (po.output) {
     outputPath = po.output
   } else {
@@ -85,7 +79,7 @@ let tableName = TABLE
     }
 
     const moment = require('moment')
-    outputPath += '1-accounts-' + tableName + '@'
+    outputPath += DEFAULT_OUTPUT_FILE_NAME_PREFIX
       + moment().format('YYYY-MM-DD[T]HH-mm-ss.SSS[Z]ZZ') + '.txt'
   }
   console.log('Output file: ' + outputPath)
@@ -105,7 +99,6 @@ const eos = EosApi(options)
 
 const fs = require('fs')
 const ws = fs.createWriteStream(outputPath, { encoding: 'utf8', autoClose: true })
-
 const set = new Set()
 
 let lastOne = ''
@@ -116,26 +109,27 @@ function succeeded(res) {
   if (res.rows) {
     let buffer = ''
     res.rows.forEach(e => {
-      if (set.has(e.scope)) {
-        console.log('Duplicated: ' + e.scope)
+      if (set.has(e.owner)) {
+        console.log('Duplicated: ' + e.owner)
       } else {
-        set.add(e.scope)
-        buffer += e.scope + '\n'
+        set.add(e.owner)
+        if (e.last_vote_weight > 0.0) {
+          buffer += e.owner + ',' + e.staked + ',' + e.last_vote_weight + '\n'
+        }
+      }
+      if (lastOne < e.owner) {
+        lastOne = e.owner
       }
     })
     ws.write(buffer)
   }
   if (res.more) {
-    if (res.more > lastOne) {
-      lastOne = res.more
-      console.log('Next: ' + lastOne)
-      eos
-        .getTableByScope(CODE, tableName, ' ' + lastOne, -1, LIMIT)
-        .then(succeeded, failed)
-    } else {
-      ws.end()
-      console.log('Duplicated, exit!')
-    }
+    console.log('Next: ' + lastOne)
+    eos
+      .getTableRows(
+        {json: true, code: CODE, scope: SCOPE, table: TABLE, limit: LIMIT
+          , lower_bound: lastOne})
+      .then(succeeded, failed)
   } else {
     ws.end()
     console.log('Done!')
@@ -146,7 +140,9 @@ function failed(err) {
   if (retry++ < 3) {
     console.log('Retry on ' + lastOne + ' for ' + retry + ' time(s)')
     eos
-      .getTableByScope(CODE, tableName, ' ' + lastOne, -1, LIMIT)
+      .getTableRows(
+        {json: true, code: CODE, scope: SCOPE, table: TABLE, limit: LIMIT
+          , lower_bound: lastOne})
       .then(succeeded, failed)
   } else {
     console.log('Retry failed on ' + lastOne)
@@ -154,5 +150,7 @@ function failed(err) {
 }
 
 eos
-  .getTableByScope(CODE, tableName, 0, -1, LIMIT)
+  .getTableRows(
+    {json: true, code: CODE, scope: SCOPE, table: TABLE, limit: LIMIT}
+  )
   .then(succeeded, failed)
